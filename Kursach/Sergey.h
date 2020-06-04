@@ -8,7 +8,8 @@
 
 struct Network
 {
-	void read(string file);
+	void read();
+	void read(string text);
 
 	void addNode(string name);
 
@@ -65,10 +66,10 @@ private:
 	List<Node*> network;
 };
 
-void Network::read(string fileS)
+void Network::read()
 {
 	ifstream file;
-	file.open(fileS);
+	file.open("input.txt");
 	file.unsetf(ios::skipws);
 
 	while (!file.eof())
@@ -76,12 +77,23 @@ void Network::read(string fileS)
 		string tempS;
 		char tempC;
 		file >> tempC;
+		bool unexpected = false;
 		while (tempC != ';')
 		{
+			if (tempC == '\n' || file.eof())
+			{
+				unexpected = true;
+				break;
+			}
 			tempS += tempC;
 			file >> tempC;
 		}
+		if (unexpected == true)
+			continue;
+
 		string S = tempS;
+		if (S.size() == 0)
+			throw exception("no S name");
 		if (contains(S) == false)
 			addNode(S);
 		tempS.clear();
@@ -89,10 +101,20 @@ void Network::read(string fileS)
 		file >> tempC;
 		while (tempC != ';')
 		{
+			if (tempC == '\n' || file.eof())
+			{
+				unexpected = true;
+				break;
+			}
 			tempS += tempC;
 			file >> tempC;
 		}
+		if (unexpected == true)
+			continue;
+
 		string T = tempS;
+		if (T.size() == 0)
+			throw exception("no T name");
 		if (contains(T) == false)
 			addNode(T);
 		tempS.clear();
@@ -103,8 +125,81 @@ void Network::read(string fileS)
 			tempS += tempC;
 			file >> tempC;
 		}
+		if (unexpected == true)
+			continue;
 
 		int weight = stoi(tempS);
+		if (weight < 0)
+			throw exception("Negative weight");
+		addChannel(S, T, weight);
+	}
+}
+
+void Network::read(string text)
+{
+	while (text.size() > 0)
+	{
+		string tempS;
+		char tempC;
+		tempC = text[0];
+		text.erase(0, 1);
+		bool unexpected = false;
+		while (tempC != ';')
+		{
+			if (tempC == '\n' || text.size() == 0)
+			{
+				unexpected = true;
+				break;
+			}
+			tempS += tempC;
+			tempC = text[0];
+			text.erase(0, 1);
+		}
+		if (unexpected == true)
+			continue;
+
+		string S = tempS;
+		if (S.size() == 0)
+			throw exception("no S name");
+		if (contains(S) == false)
+			addNode(S);
+		tempS.clear();
+
+		tempC = text[0];
+		text.erase(0, 1);
+		while (tempC != ';')
+		{
+			if (tempC == '\n' || text.size() == 0)
+			{
+				unexpected = true;
+				break;
+			}
+			tempS += tempC;
+			tempC = text[0];
+			text.erase(0, 1);
+		}
+		if (unexpected == true)
+			continue;
+
+		string T = tempS;
+		if (T.size() == 0)
+			throw exception("no T name");
+		if (contains(T) == false)
+			addNode(T);
+		tempS.clear();
+		if (text[0] == '\n' || text.size() == 0)
+			continue;
+		tempC = text[0];
+		while (tempC != '\n' && text.size() > 0)
+		{
+			tempS += tempC;
+			text.erase(0, 1);
+			tempC = text[0];
+		}
+
+		int weight = stoi(tempS);
+		if (weight < 0)
+			throw exception("Negative weight");
 		addChannel(S, T, weight);
 	}
 }
@@ -120,14 +215,14 @@ void Network::addNode(string name)
 
 void Network::addChannel(unsigned int S, unsigned int T, int capacity)
 {
-	if (S > network.GetSize() - 1 || T > network.GetSize() - 1)
-		throw exception("Out of range");
 	Node::Channel* temp = new Node::Channel(network[T], capacity);
 	network[S]->addChannel(temp);
 }
 
 void Network::addChannel(string nameDeparture, string nameDestination, int capacity)
 {
+	if (capacity < 0)
+		throw exception("Negative weight");
 	addChannel(stoindex(nameDeparture), stoindex(nameDestination), capacity);
 }
 
